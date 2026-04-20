@@ -13,6 +13,9 @@ import type {
   TechniqueStatus,
 } from "@/lib/types/learning";
 import { selectActivePath, useSessionStore } from "@/store/sessionStore";
+import { computePlanProgressPercent } from "@/utils/progress";
+
+const LEVEL_ORDER: SkillLevel[] = ["beginner", "intermediate", "advanced"];
 
 export function LearningDashboard() {
   const paths = useSessionStore((s) => s.paths);
@@ -124,6 +127,18 @@ export function LearningDashboard() {
   const sortedTechniques = useMemo(() => {
     if (!plan) return [];
     return [...plan.techniques].sort((a, b) => a.order - b.order);
+  }, [plan]);
+
+  const progressPct = useMemo(() => {
+    if (!plan) return 0;
+    return computePlanProgressPercent(plan, progress);
+  }, [plan, progress]);
+
+  const nextLevel = useMemo<SkillLevel | null>(() => {
+    if (!plan) return null;
+    const idx = LEVEL_ORDER.indexOf(plan.level);
+    if (idx === -1 || idx >= LEVEL_ORDER.length - 1) return null;
+    return LEVEL_ORDER[idx + 1];
   }, [plan]);
 
   async function handleCreatePlan(input: {
@@ -278,6 +293,39 @@ export function LearningDashboard() {
             {saveState === "error" && saveError ? (
               <div className="rounded-xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                 {saveError}
+              </div>
+            ) : null}
+
+            {progressPct >= 100 ? (
+              <div className="rounded-2xl border border-[#2dd4bf]/35 bg-[#2dd4bf]/10 p-4 sm:p-5">
+                <p className="text-sm font-semibold text-[#99f6e4]">
+                  You completed this level. Nice work.
+                </p>
+                {nextLevel ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-white/80">
+                      Now move on to <span className="capitalize">{nextLevel}</span> level.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void handleCreatePlan({
+                          hobby: plan.hobby,
+                          level: nextLevel,
+                          goal: plan.goal,
+                        })
+                      }
+                      disabled={loading}
+                      className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0c0e12] transition hover:bg-white/95 disabled:opacity-50"
+                    >
+                      {loading ? "Creating next level..." : `Start ${nextLevel} path`}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-white/70">
+                    You have completed the highest configured level for this hobby.
+                  </p>
+                )}
               </div>
             ) : null}
             <section aria-label="Techniques" className="w-full space-y-6">
