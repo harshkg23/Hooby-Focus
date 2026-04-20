@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { MarketingHeader } from "@/components/layout/MarketingHeader";
 
 const STEPS = [
@@ -17,6 +20,23 @@ const STEPS = [
 ];
 
 export function LandingPage() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!cancelled) setLoggedIn(res.ok);
+      } catch {
+        if (!cancelled) setLoggedIn(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0c0e12] text-white">
       <div className="pointer-events-none absolute inset-0">
@@ -51,18 +71,29 @@ export function LandingPage() {
               three ways to absorb each technique.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link
-                href="/signup"
-                className="inline-flex w-full min-w-[200px] items-center justify-center rounded-full bg-white px-8 py-3.5 text-base font-semibold text-[#0c0e12] shadow-xl shadow-black/25 transition hover:bg-white/95 sm:w-auto"
-              >
-                Start free
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex w-full min-w-[200px] items-center justify-center rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-base font-medium text-white backdrop-blur-sm transition hover:bg-white/10 sm:w-auto"
-              >
-                I have an account
-              </Link>
+              {loggedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="inline-flex w-full min-w-[220px] items-center justify-center rounded-full bg-white px-8 py-3.5 text-base font-semibold text-[#0c0e12] shadow-xl shadow-black/25 transition hover:bg-white/95 sm:w-auto"
+                >
+                  Go to dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/signup"
+                    className="inline-flex w-full min-w-[200px] items-center justify-center rounded-full bg-white px-8 py-3.5 text-base font-semibold text-[#0c0e12] shadow-xl shadow-black/25 transition hover:bg-white/95 sm:w-auto"
+                  >
+                    Start free
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="inline-flex w-full min-w-[200px] items-center justify-center rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-base font-medium text-white backdrop-blur-sm transition hover:bg-white/10 sm:w-auto"
+                  >
+                    I have an account
+                  </Link>
+                </>
+              )}
             </div>
             <p className="mt-6 text-sm text-white/40">No credit card · Your progress stays yours</p>
           </div>
@@ -115,18 +146,29 @@ export function LandingPage() {
                   Sign in, pick your next skill, and let the path do the organizing.
                 </p>
                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                  <Link
-                    href="/signup"
-                    className="inline-flex min-w-[200px] items-center justify-center rounded-full bg-white px-8 py-3.5 text-base font-semibold text-[#0c0e12] shadow-lg transition hover:bg-white/95"
-                  >
-                    Create account
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="text-sm font-medium text-white/70 underline-offset-4 hover:text-white hover:underline"
-                  >
-                    Log in instead
-                  </Link>
+                  {loggedIn ? (
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex min-w-[220px] items-center justify-center rounded-full bg-white px-8 py-3.5 text-base font-semibold text-[#0c0e12] shadow-lg transition hover:bg-white/95"
+                    >
+                      Open dashboard
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        href="/signup"
+                        className="inline-flex min-w-[200px] items-center justify-center rounded-full bg-white px-8 py-3.5 text-base font-semibold text-[#0c0e12] shadow-lg transition hover:bg-white/95"
+                      >
+                        Create account
+                      </Link>
+                      <Link
+                        href="/login"
+                        className="text-sm font-medium text-white/70 underline-offset-4 hover:text-white hover:underline"
+                      >
+                        Log in instead
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

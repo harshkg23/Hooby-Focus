@@ -45,7 +45,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[rgb(12_14_18/0.72)] backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <Link
-            href="/dashboard"
+            href="/"
             className="font-display text-lg font-semibold tracking-tight text-white"
           >
             Hobby Focus
