@@ -67,6 +67,7 @@ interface SessionState {
   activePathId: string | null;
   boundUserId: string | null;
   addPath: (plan: LearningPlan) => void;
+  hydrateFromServer: (paths: SavedLearningPath[], activePathId: string | null) => void;
   setActivePath: (pathId: string) => void;
   setTechniqueStatus: (techniqueId: string, status: TechniqueStatus) => void;
   removePath: (pathId: string) => void;
@@ -98,6 +99,16 @@ export const useSessionStore = create<SessionState>()(
             boundUserId: state.boundUserId,
           };
         }),
+
+      hydrateFromServer: (paths, activePathId) =>
+        set((state) => ({
+          paths,
+          activePathId:
+            activePathId && paths.some((p) => p.pathId === activePathId)
+              ? activePathId
+              : paths[0]?.pathId ?? null,
+          boundUserId: state.boundUserId,
+        })),
 
       setActivePath: (pathId) => set({ activePathId: pathId }),
 

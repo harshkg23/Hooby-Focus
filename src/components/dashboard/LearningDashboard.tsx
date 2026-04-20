@@ -19,6 +19,7 @@ export function LearningDashboard() {
   const activePathId = useSessionStore((s) => s.activePathId);
   const activePath = useSessionStore(selectActivePath);
   const addPath = useSessionStore((s) => s.addPath);
+  const hydrateFromServer = useSessionStore((s) => s.hydrateFromServer);
   const setActivePath = useSessionStore((s) => s.setActivePath);
   const setTechniqueStatus = useSessionStore((s) => s.setTechniqueStatus);
   const removePath = useSessionStore((s) => s.removePath);
@@ -31,6 +32,8 @@ export function LearningDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [sheetTechnique, setSheetTechnique] = useState<Technique | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [serverSyncReady, setServerSyncReady] = useState(false);
   const [showNewPathForm, setShowNewPathForm] = useState(false);
 
   useEffect(() => {
@@ -41,6 +44,21 @@ export function LearningDashboard() {
         const data = (await res.json()) as { user?: { id: string } };
         if (cancelled || !data.user?.id) return;
         syncForUser(data.user.id);
+        setUserId(data.user.id);
+
+        const pathRes = await fetch("/api/user-paths");
+        const pathData = (await pathRes.json()) as {
+          paths?: Array<{
+            pathId: string;
+            plan: LearningPlan;
+            progress: Record<string, { status: TechniqueStatus; updatedAt: string }>;
+          }>;
+          activePathId?: string | null;
+        };
+        if (!cancelled && pathRes.ok && Array.isArray(pathData.paths) && pathData.paths.length > 0) {
+          hydrateFromServer(pathData.paths, pathData.activePathId ?? null);
+        }
+        if (!cancelled) setServerSyncReady(true);
       } finally {
         if (!cancelled) setAuthReady(true);
       }
@@ -48,7 +66,22 @@ export function LearningDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [syncForUser]);
+  }, [syncForUser, hydrateFromServer]);
+
+  useEffect(() => {
+    if (!authReady || !serverSyncReady || !userId) return;
+    const timeout = window.setTimeout(() => {
+      void fetch("/api/user-paths", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paths,
+          activePathId,
+        }),
+      });
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [authReady, serverSyncReady, userId, paths, activePathId]);
 
   useEffect(() => {
     if (paths.length > 0 && !activePathId) {
